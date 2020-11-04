@@ -1,0 +1,394 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define name_len 15//姓名的字符最大长度
+#define stud_len 32//略大于最大学生人数
+#define cour_len 8//略大于最多课程数
+
+typedef struct student
+{
+    int num;
+    char name[name_len];
+    double score[stud_len];
+    double stud_sum,stud_aver;
+}STUDENT;
+
+int flag=0;
+int Menu(void);
+void readscore(int stud_num,int cour_num,STUDENT student[]);
+void CalculateEveryCourse(int stud_num,int cour_num,STUDENT student[],double cour_sum[],double cour_aver[]);
+void CalculateEveryStudent(int stud_num,int cour_num,STUDENT student[]);
+void PrintSumAver(int stud_num,int cour_num,STUDENT student[]);
+double descending_double(double a,double b);
+double ascending_double(double a,double b);
+void PrintfAscending(int stud_num,int cour_num,STUDENT student[]);
+void PrintfDescending(int stud_num,int cour_num, STUDENT student[]);
+void RankScore(int stud_num,int cour_num,STUDENT student[],double (*compare)(double,double));
+int descending_int(int a,int b);
+void PrintScore(int stud_num,int cour_num,STUDENT student[]);
+void RankNum(int stud_num,int cour_num,STUDENT student[]);
+void RankName(int stud_num,int cour_num,STUDENT student[]);
+void SearchByNum(int stud_num,int cour_num,STUDENT student[]);
+void SearchByName(int stud_num,int cour_num,STUDENT student[]);
+void classify(int stud_num,int cour_num,STUDENT student[]);
+
+int main()
+{
+    int stud_num,cour_num;
+    double cour_sum[cour_len],cour_aver[cour_len];
+    STUDENT student[stud_len];
+
+    printf("Input the number of the students:");
+    do{
+    scanf("%d",&stud_num);//输入学生人数
+    }while(stud_num>31 || stud_num<0);
+
+    printf("Input the number of the courses:");
+    do{
+    scanf("%d",&cour_num);//输入课程数
+    }while(cour_num>31 || cour_num<0);
+
+	printf("1.Input record\n"
+		"2.Calculate total and average score of every course\n"
+		"3.Calculate total and average score of every student\n"
+		"4.Sort in descending order by total score of every student\n"
+		"5.Sort in ascending order by total score of every student\n"
+		"6.Sort in ascending order by number\n"
+		"7.Sort in dictionary order by name\n"
+		"8.Search by number\n"
+		"9.Search by name\n"
+		"10.Statistic analysis\n"
+		"11.List record\n"
+		"0.Exit\n");
+
+    while(1)
+    {
+        int c;
+        do{
+            c=Menu();
+        }while(flag==0);//若不是先输入1，则反复执行menu直到输入1
+        switch(c)
+        {
+            case 1:readscore(stud_num,cour_num,student);
+                        break;
+            case 2:CalculateEveryCourse(stud_num,cour_num,student,cour_sum,cour_aver);
+                        break;
+            case 3:CalculateEveryStudent(stud_num,cour_num,student);
+                        PrintSumAver(stud_num,cour_num,student);
+                        break;
+            case 4:CalculateEveryStudent(stud_num,cour_num,student);
+                        RankScore(stud_num,cour_num,student,descending_double);
+                        PrintfAscending(stud_num,cour_num,student);
+                        break;
+            case 5:CalculateEveryStudent(stud_num,cour_num,student);
+                        RankScore(stud_num,cour_num,student,ascending_double);
+                        PrintfDescending(stud_num,cour_num,student);
+                        break;
+            case 6:RankNum(stud_num,cour_num,student);
+                        PrintScore(stud_num,cour_num,student);
+                        break;
+            case 7:RankName(stud_num,cour_num,student);
+                        PrintScore(stud_num,cour_num,student);
+                        break;
+            case 8:RankScore(stud_num,cour_num,student,descending_double);
+                        SearchByNum(stud_num,cour_num,student);
+                        break;
+            case 9:RankScore(stud_num,cour_num,student,descending_double);
+                        SearchByName(stud_num,cour_num,student);
+                        break;
+            case 10:classify(stud_num,cour_num,student);
+                        break;
+            case 11:PrintScore(stud_num,cour_num,student);
+                        break;
+            case 0:exit(0);
+            default:
+                        printf("Input error!\n");
+        }
+    }
+    return 0;
+}
+
+ int Menu(void)
+{
+    printf("Please Input your choice:");
+    int i;
+    scanf("%d", &i);
+    if(i==1)flag=1;
+    return i;
+}
+
+//case1：输入学号、姓名、成绩
+void readscore(int stud_num,int cour_num,STUDENT student[])
+{
+    printf("Input number,name and score:(空格分开)\n");
+    for(int i=1;i<=stud_num;i++)
+    {
+        scanf("%d",&student[i].num);
+        scanf("%s",student[i].name);
+        getchar();
+        for(int j=1;j<=cour_num;j++)
+        {
+            scanf("%lf",&student[i].score[j]);
+        }
+    }
+    return ;
+}
+
+//case2:计算每门课程总分和平均分
+void CalculateEveryCourse(int stud_num,int cour_num,STUDENT student[],double cour_sum[],double cour_aver[])
+{
+    //将分数和平均分先初始为0
+    for(int i=1;i<=cour_num;i++)
+    {
+        cour_sum[i]=0;
+        cour_aver[i]=0;
+    }
+     for(int j=1;j<=cour_num;j++)
+     {
+        for(int i=1;i<=stud_num;i++)
+        {
+            cour_sum[j]+=student[i].score[j];
+        }
+        cour_aver[j]=cour_sum[j]/stud_num;
+        printf("course%d:  sum=%lf\t aver=%lf\n",j,cour_sum[j],cour_aver[j]);
+     }
+     return ;
+}
+
+//case3:计算每个学生总分和平均分
+void CalculateEveryStudent(int stud_num,int cour_num,STUDENT student[])
+{
+    for(int i=1;i<=stud_num;i++)
+    {
+        student[i].stud_sum=0;
+        student[i].stud_aver=0;
+    }
+    for(int i=1;i<=stud_num;i++)
+    {
+        for(int j=1;j<=cour_num;j++)
+        {
+            student[i].stud_sum+=student[i].score[j];
+        }
+        student[i].stud_aver=student[i].stud_sum/cour_num;
+     }
+     return ;
+}
+
+void PrintSumAver(int stud_num,int cour_num,STUDENT student[])
+{
+    for(int i=1;i<=stud_num;i++)
+     {
+        printf("student%d\t %s\t sum=%lf\t aver=%lf\n", student[i].num,student[i].name,student[i].stud_sum,student[i].stud_aver);
+     }
+}
+
+//case4、5:总分排序
+double descending_double(double a,double b)
+{
+    return a<b;
+}
+
+double ascending_double(double a,double b)
+{
+    return a>b;
+}
+
+void swap_int(int* a,int* b)
+{
+    int temp;
+    temp=*a;
+    *a=*b;
+    *b=temp;
+}
+
+void swap_double(double* a,double* b)
+{
+    double temp;
+    temp=*a;
+    *a=*b;
+    *b=temp;
+}
+
+void PrintfAscending(int stud_num,int cour_num,STUDENT student[])
+{
+    for(int i=1;i<=stud_num;i++)
+    {
+        printf("学号:%d\t姓名:%s\t总分:%lf\t名次:%d\n",student[i].num,student[i].name,student[i].stud_sum,i);
+    }
+}
+
+void PrintfDescending(int stud_num,int cour_num, STUDENT student[])
+{
+    for(int i=1;i<=stud_num;i++)
+    {
+        printf("学号:%d\t姓名:%s\t总分:%lf\t名次:%d\n",student[i].num,student[i].name,student[i].stud_sum,stud_num-i+1);
+    }
+}
+
+void swap_char(char *a,char *b)
+{
+    char temp[name_len];
+    strcpy(temp,a);
+    strcpy(a,b);
+    strcpy(b,temp);
+}
+
+void RankScore(int stud_num,int cour_num,STUDENT student[],double (*compare)(double,double))
+{
+    for(int i=1;i<=stud_num-1;i++)
+    {
+        int k=i;
+        for(int j=i+1;j<=stud_num;j++)
+        {
+            if((*compare)(student[k].stud_sum,student[j].stud_sum))
+                k=j;
+        }
+        if(k!=i)
+        {
+            swap_double(&student[k].stud_sum,&student[i].stud_sum);
+            swap_int(&student[k].num,&student[i].num);
+            swap_char(student[k].name,student[i].name);
+            for(int m=1;m<=cour_num;m++)
+            {
+                swap_double(&student[k].score[m],&student[i].score[m]);
+            }
+        }
+    }
+}
+
+//case6:学号排序
+int descending_int(int a,int b)
+{
+    return a>b;
+}
+
+void PrintScore(int stud_num,int cour_num,STUDENT student[])
+{
+    for(int i=1;i<=stud_num;i++)
+    {
+        printf("name:%s\t num:%d \n",student[i].name,student[i].num);
+        for(int j=1;j<= cour_num;j++)
+        {
+            printf("course%d:%lf\n",j,student[i].score[j]);
+        }
+    }
+}
+
+void RankNum(int stud_num,int cour_num,STUDENT student[])
+{
+    for(int i=1;i<=stud_num-1;i++)
+    {
+        int k=i;
+        for(int j=i+1;j<=stud_num;j++)
+        {
+            if(descending_int(student[k].num,student[j].num))
+                k=j;
+        }
+        if(k!=i)
+        {
+            swap_double(&student[k].stud_sum,&student[i].stud_sum);
+            swap_int(&student[k].num,&student[i].num);
+            swap_char(student[k].name,student[i].name);
+            for(int m=1;m<=cour_num;m++)
+            {
+                swap_double(&student[k].score[m],&student[i].score[m]);
+            }
+        }
+    }
+}
+
+//case 7:姓名排序
+void RankName(int stud_num,int cour_num,STUDENT student[])
+{
+    for(int i=1;i<=stud_num-1;i++)
+    {
+        int k=i;
+        for(int j=i+1;j<=stud_num;j++)
+        {
+            if(strcmp(student[k].name,student[j].name)>0)
+                k=j;
+        }
+        if(k!=i)
+        {
+            swap_double(&student[k].stud_sum,&student[i].stud_sum);
+            swap_int(&student[k].num,&student[i].num);
+            swap_char(student[k].name,student[i].name);
+            for(int m=1;m<=cour_num;m++)
+            {
+                swap_double(&student[k].score[m],&student[i].score[m]);
+            }
+        }
+    }
+}
+
+//case 8:学号查询
+void SearchByNum(int stud_num,int cour_num,STUDENT student[])
+{
+    int k;//k为待查找的学号
+    printf("输入学号：");
+    scanf("%d",&k);
+    for(int i=1;i<=stud_num;i++)
+    {
+        if(student[i].num==k)
+        {
+            printf("姓名:%s\t排名:%d\n",student[i].name,i);
+            for(int j=1;j<= cour_num;j++)
+            {
+            printf("course%d:%lf\n",j,student[i].score[j]);
+            }
+            return ;
+        }
+    }
+    printf("Not found\n");
+}
+
+//case 9:姓名查询
+void SearchByName(int stud_num,int cour_num,STUDENT student[])
+{
+    char k[name_len];//k为待查找的姓名
+    printf("输入姓名：");
+    scanf("%s",k);
+    for(int i=1;i<=stud_num;i++)
+    {
+        if(strcmp(student[i].name,k)==0)
+        {
+            printf("学号:%d\t排名:%d\n",student[i].num,i);
+            for(int j=1;j<= cour_num;j++)
+            {
+            printf("course%d:%lf\n",j,student[i].score[j]);
+            }
+            return ;
+        }
+    }
+    printf("Not found\n");
+}
+
+//case 10:分类并输出
+void classify(int stud_num,int cour_num,STUDENT student[])
+{
+    int sort[cour_len][6]={0};
+    for(int j=1;j<=cour_num;j++)//j将遍历所有科目
+    {
+        for(int i=1;i<=stud_num;i++)//i将遍历所有人
+        {
+            if(student[i].score[j]>0 && student[i].score[j]<=59)
+                sort[j][5]++;
+            else if(student[i].score[j]<=69)
+                sort[j][4]++;
+            else if(student[i].score[j]<=79)
+                sort[j][3]++;
+            else if(student[i].score[j]<=89)
+                sort[j][2]++;
+            else if(student[i].score[j]<=100)
+                sort[j][1]++;
+        }
+        printf("科目%d:\n",j);
+        printf("优秀人数%d，占比%lf%%\n",sort[j][1],100*(sort[j][1]*1.0/stud_num));
+        printf("良好人数%d，占比%lf%%\n",sort[j][2],100*(sort[j][2]*1.0/stud_num));
+        printf("中等人数%d，占比%lf%%\n",sort[j][3],100*(sort[j][3]*1.0/stud_num));
+        printf("及格人数%d，占比%lf%%\n",sort[j][4],100*(sort[j][4]*1.0/stud_num));
+        printf("不及格人数%d，占比%lf%%\n",sort[j][5],100*(sort[j][5]*1.0/stud_num));
+    }
+}
+
+
